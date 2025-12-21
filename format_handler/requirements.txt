@@ -1,0 +1,22 @@
+# Core dependencies
+pandas>=1.5.0
+
+# Parquet support (required for parquet format handler)
+# Compatible with pandas>=1.5.0
+# pyarrow 10.x-13.x are stable and compatible with pandas 1.5+
+pyarrow>=10.0.0,<14.0.0
+
+# Optional dependencies for specific formats
+# Uncomment as needed:
+
+# Excel
+# openpyxl>=3.0.0
+# xlrd>=2.0.0
+
+# Development
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0
+
