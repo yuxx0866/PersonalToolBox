@@ -1,0 +1,39 @@
+# Format Handler Module Configuration
+
+# Format-specific settings
+formats:
+  csv:
+    separator: ','  # Column separator
+    encoding: 'utf-8'
+    # Additional pandas read_csv options can be added here
+    # header: 0
+    # skiprows: 0
+    # nrows: null
+  
+  custom_txt:
+    column_separator: '*endf*'  # Column separator
+    row_separator: '*endr*'      # Row separator
+    encoding: 'utf-8'
+    # Additional options
+    # has_header: true
+    # strip_whitespace: true
+  
+  parquet:
+    engine: 'pyarrow'  # 'pyarrow' or 'fastparquet'
+    # columns: null  # List of column names to read (null = read all)
+    # use_pandas_metadata: true
+  
+  # Future formats (to be added):
+  # excel:
+  #   sheet_name: 0
+  #   engine: 'openpyxl'
+  # 
+  # json:
+  #   orient: 'records'
+  #   lines: false
+
+# Default settings
+defaults:
+  encoding: 'utf-8'
+  error_handling: 'raise'  # 'raise', 'warn', 'ignore'
+
