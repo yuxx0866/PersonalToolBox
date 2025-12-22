@@ -1,0 +1,69 @@
+# Data Loader Module Configuration
+
+# Credentials and authentication
+# Add credentials here as new sources are implemented
+credentials:
+  # Future sources (to be added):
+  # github:
+  #   token: null  # Set via environment variable GITHUB_TOKEN
+  #   username: null
+  # 
+  # sharepoint:
+  #   client_id: null  # Set via environment variable SHAREPOINT_CLIENT_ID
+  #   client_secret: null  # Set via environment variable SHAREPOINT_CLIENT_SECRET
+  #   tenant_id: null  # Set via environment variable SHAREPOINT_TENANT_ID
+  # 
+  # azure:
+  #   connection_string: null  # Set via environment variable AZURE_STORAGE_CONNECTION_STRING
+  #   account_name: null
+  #   account_key: null
+  #   tenant_id: null
+  #   client_id: null
+  #   client_secret: null
+
+# Default settings for each source type
+defaults:
+  local:
+    encoding: 'utf-8'
+    chunk_size: 10000
+    low_memory: true
+    # Optional: Path to format_handler configuration file
+    # If not provided, format_handler uses its default config
+    format_handler_config_path: null
+  
+  # Future sources (to be added):
+  # github:
+  #   branch: 'main'
+  #   timeout: 30
+  #   retry_attempts: 3
+  # 
+  # sharepoint:
+  #   timeout: 60
+  #   retry_attempts: 3
+  #   download_path: './downloads'
+  # 
+  # azure:
+  #   timeout: 60
+  #   retry_attempts: 3
+  #   max_concurrency: 4
+
+# Logging configuration
+logging:
+  level: 'INFO'  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file: null  # Set to a file path to enable file logging
+  console: true
+
+# Caching configuration
+cache:
+  enabled: false
+  ttl: 3600  # Time to live in seconds
+  directory: './.cache'
+
+# Data processing options
+processing:
+  auto_clean: false
+  validate_schema: false
+  parallel_processing: false
+  max_workers: 4
+
