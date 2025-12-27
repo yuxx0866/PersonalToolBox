@@ -136,7 +136,8 @@ class LoaderFactory:
     
     def create_loader_from_config(
         self,
-        data_config: Dict[str, Any]
+        data_config: Dict[str, Any],
+        config_file_path: Optional[Path] = None
     ) -> BaseLoader:
         """
         Create a loader instance from a data configuration dictionary.
@@ -147,9 +148,13 @@ class LoaderFactory:
                         {
                             'loader': {
                                 'type': 'local',
-                                'config': {...}
+                                'config': {
+                                    'base_directory': '...',  # Optional
+                                    ...
+                                }
                             }
                         }
+            config_file_path: Optional path to config file (for resolving base_directory)
         
         Returns:
             Loader instance
@@ -170,7 +175,15 @@ class LoaderFactory:
             )
         
         loader_type = loader_section['type']
-        loader_config = loader_section.get('config', {})
+        loader_config = loader_section.get('config', {}).copy()
+        
+        # Add config_file_path to loader config if provided
+        # This is used for resolving base_directory relative to config file
+        if config_file_path is not None:
+            loader_config['config_file_path'] = str(config_file_path)
+        
+        # If base_directory is not specified, it will default to config file's directory
+        # (handled in file_finder._resolve_base_directory)
         
         return self.create_loader(loader_type, config=loader_config)
 
@@ -252,7 +265,7 @@ def get_loader(
         >>> # Load by type with custom config
         >>> loader = get_loader(loader_type='local', config={'format_handler_config_path': '...'})
     """
-    from .utils.config_loader import load_data_config
+    from .utils.config_loader import load_data_config, get_data_config_path
     
     # If explicit loader_type is provided, use it directly
     if loader_type is not None:
@@ -260,9 +273,10 @@ def get_loader(
         return factory.create_loader(loader_type, config=config)
     
     # Otherwise, load from config file
+    config_file_path = get_data_config_path(config_path=config_path)
     data_config = load_data_config(config_path=config_path)
     factory = get_default_factory()
-    return factory.create_loader_from_config(data_config)
+    return factory.create_loader_from_config(data_config, config_file_path=config_file_path)
 
 
 def load_data(
@@ -316,12 +330,17 @@ def load_data(
     # Get loader from config
     loader = get_loader(config_path=config_path)
     
+    # Get config file path for base_directory resolution
+    from .utils.config_loader import get_data_config_path
+    config_file_path = get_data_config_path(config_path=config_path)
+    
     # Determine source path
     if source_path is not None:
         # Direct path provided
         file_path = source_path
         # Extract format and other params from kwargs
         format_param = kwargs.pop('format', None)
+        match_strategy = kwargs.pop('match_strategy', 'first')
     elif source_name is not None:
         # Named source from config
         data_config = load_data_config(config_path=config_path)
@@ -342,21 +361,29 @@ def load_data(
         
         source_config = sources[source_name]
         
-        if 'path' not in source_config:
+        # Support both 'path' and 'pattern' fields
+        if 'path' not in source_config and 'pattern' not in source_config:
             raise ValueError(
-                f"Source '{source_name}' configuration must contain a 'path' field"
+                f"Source '{source_name}' configuration must contain either a 'path' or 'pattern' field"
             )
         
-        file_path = source_config['path']
+        # Use pattern if available, otherwise use path
+        file_path = source_config.get('pattern') or source_config.get('path')
         
         # Extract format and other params from source config
         format_param = source_config.get('format')
+        match_strategy = source_config.get('match_strategy', 'first')
         
         # Merge source-specific params with kwargs (kwargs take precedence)
         source_params = {k: v for k, v in source_config.items() 
-                        if k not in ['path', 'format']}
-        # Remove format from kwargs if it was passed, use source config format
+                        if k not in ['path', 'pattern', 'format', 'match_strategy', 'directory']}
+        # Remove format and match_strategy from kwargs if they were passed
         kwargs.pop('format', None)
+        kwargs.pop('match_strategy', None)
+        
+        # Add match_strategy to kwargs if specified in config
+        if match_strategy:
+            kwargs['match_strategy'] = match_strategy
         # Merge: source params first, then kwargs override
         merged_params = {**source_params, **kwargs}
         kwargs = merged_params
@@ -373,12 +400,24 @@ def load_data(
         # Use first source
         first_source_name = list(data_config['sources'].keys())[0]
         source_config = data_config['sources'][first_source_name]
-        file_path = source_config['path']
+        
+        # Support both 'path' and 'pattern' fields
+        if 'path' not in source_config and 'pattern' not in source_config:
+            raise ValueError(
+                f"Source '{first_source_name}' configuration must contain either a 'path' or 'pattern' field"
+            )
+        
+        file_path = source_config.get('pattern') or source_config.get('path')
         format_param = source_config.get('format')
+        match_strategy = source_config.get('match_strategy', 'first')
         
         # Merge source-specific params
         source_params = {k: v for k, v in source_config.items() 
-                        if k not in ['path', 'format']}
+                        if k not in ['path', 'pattern', 'format', 'match_strategy', 'directory']}
+        
+        # Add match_strategy to kwargs if specified in config
+        if match_strategy:
+            kwargs['match_strategy'] = match_strategy
         kwargs = {**source_params, **kwargs}
     
     # Get defaults from config
