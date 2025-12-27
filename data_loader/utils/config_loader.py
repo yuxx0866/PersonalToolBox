@@ -257,3 +257,57 @@ def _convert_env_value(value: str) -> Any:
     # Return as string
     return value
 
+
+def get_data_config_path(config_path: Optional[str] = None) -> Path:
+    """
+    Get the path to the data_config.yaml file.
+    
+    This is useful for resolving relative base_directory paths
+    relative to the config file location.
+    
+    Args:
+        config_path: Optional explicit path to data_config.yaml file.
+                   If None, uses fallback strategy to find config file.
+    
+    Returns:
+        Path to the config file
+    
+    Raises:
+        FileNotFoundError: If config file is not found
+    """
+    if config_path is not None:
+        config_path_obj = Path(config_path).expanduser().resolve()
+        if not config_path_obj.exists():
+            raise FileNotFoundError(
+                f"Data configuration file not found at specified path: {config_path_obj}. "
+                f"Please check the path or use fallback discovery by omitting config_path."
+            )
+        return config_path_obj
+    else:
+        config_path_obj = _find_data_config_file()
+        if config_path_obj is None:
+            # Provide helpful error message with search locations
+            search_locations = [
+                f"Environment variable: DATA_LOADER_CONFIG_PATH",
+                f"Current directory: {Path.cwd() / 'config' / 'data_config.yaml'}",
+                f"Current directory: {Path.cwd() / 'data_config.yaml'}",
+                f"User home: {Path.home() / '.data_loader' / 'data_config.yaml'}",
+            ]
+            if os.name == 'nt':
+                appdata = os.environ.get('APPDATA', '')
+                if appdata:
+                    search_locations.append(f"AppData: {Path(appdata) / 'data_loader' / 'data_config.yaml'}")
+            else:
+                search_locations.append(f"XDG config: {Path.home() / '.config' / 'data_loader' / 'data_config.yaml'}")
+            
+            locations_str = "\n  - ".join(search_locations)
+            raise FileNotFoundError(
+                f"Data configuration file 'data_config.yaml' not found in any standard location.\n\n"
+                f"Searched locations:\n  - {locations_str}\n\n"
+                f"Please either:\n"
+                f"  1. Create data_config.yaml in one of the above locations, or\n"
+                f"  2. Set DATA_LOADER_CONFIG_PATH environment variable, or\n"
+                f"  3. Provide explicit path: get_data_config_path(config_path='path/to/config.yaml')"
+            )
+        return config_path_obj
+

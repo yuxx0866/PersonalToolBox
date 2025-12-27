@@ -11,6 +11,8 @@ This module provides a unified interface for loading data from multiple sources.
   - Uses the `format_handler` module for format parsing
   - Automatically detects file format from extension
   - Supports explicit format specification
+  - **Glob pattern matching** for files with dynamic names (e.g., date-based filenames)
+  - Supports patterns in entire path, including directory wildcards
 
 **Designed for Future Extension:**
 - **GitHub**: Raw files, releases, repositories
@@ -38,6 +40,7 @@ data_loader/
 ├── utils/                   # Utility functions
 │   ├── __init__.py
 │   ├── config_loader.py    # Configuration management
+│   ├── file_finder.py       # File pattern matching and path resolution
 │   ├── logger.py           # Logging utilities
 │   └── validators.py       # Data validation helpers
 └── tests/                   # Test suite
@@ -92,6 +95,17 @@ data = loader.get_data(
     column_separator='*endf*',
     row_separator='*endr*'
 )
+
+# Load file using glob pattern (for files with dynamic names)
+#The default setting is Matches first file alphabetically
+# Matches first file alphabetically (e.g., data_2024-01-15.csv)
+data = loader.get_data('data_*.csv', match_strategy='first')
+
+# Load most recently modified file matching pattern
+data = loader.get_data('reports/*/report_*.parquet', match_strategy='latest')
+
+# Load all matching files (concatenated into single DataFrame)
+data = loader.get_data('data_*.csv', match_strategy='all')
 ```
 
 ### Advanced Usage
@@ -124,6 +138,57 @@ data = local_loader.get_data(
     source='path/to/file.csv',
     validate_before_load=False
 )
+
+# Pattern matching with base directory
+# All patterns are resolved relative to base_directory for security
+config = {
+    'base_directory': '../TestData',  # Base directory for pattern resolution
+    'config_file_path': '/path/to/config.yaml'  # For resolving relative base_directory
+}
+loader = LocalFileLoader(config=config)
+data = loader.get_data('data_*.csv')  # Searches in TestData/data_*.csv
+```
+
+### Configuration-Driven Usage (Recommended)
+
+The module supports a configuration-driven approach using `data_config.yaml`:
+
+```python
+from data_loader import load_data, get_loader
+
+# Load named source from config file
+# Supports both 'path' and 'pattern' fields
+data = load_data('daily_data')  # Uses pattern from config
+
+# Get configured loader and use directly
+loader = get_loader()
+data = loader.get_data('data_*.csv', match_strategy='latest')
+```
+
+**Example `data_config.yaml`:**
+```yaml
+loader:
+  type: "local"
+  config:
+    base_directory: "TestData"  # All patterns relative to this
+
+sources:
+  # Exact path (backward compatible)
+  csv_data:
+    path: "test.csv"
+    format: "csv"
+  
+  # Pattern-based (for dynamic filenames)
+  daily_data:
+    pattern: "data_*.csv"  # Matches data_2024-01-15.csv, etc.
+    format: "csv"
+    match_strategy: "first"  # Options: "first", "latest", "all"
+  
+  # Pattern with directory wildcards
+  monthly_reports:
+    pattern: "reports/*/report_*.parquet"
+    format: "parquet"
+    match_strategy: "latest"
 ```
 
 ### Supported File Formats
@@ -143,6 +208,40 @@ The `LocalFileLoader` supports the following formats (via `format_handler`):
 New formats can be added to the `format_handler` module and will automatically
 be available to `LocalFileLoader`.
 
+### Pattern Matching
+
+The `LocalFileLoader` supports glob pattern matching for files with dynamic names,
+such as files with dates or version numbers in their names.
+
+**Pattern Examples:**
+- `data_*.csv` - Matches files like `data_2024-01-15.csv`, `data_2024-01-16.csv`
+- `reports/*/report_*.parquet` - Matches files in subdirectories like `reports/2024/report_01.parquet`
+- `raw_*/processed_*/data_*.csv` - Matches files with multiple directory wildcards
+
+**Match Strategies:**
+- `"first"` (default): Returns the first match alphabetically
+- `"latest"`: Returns the most recently modified file
+- `"all"`: Returns all matching files (concatenated into a single DataFrame)
+
+**Security:**
+- All patterns are resolved relative to a `base_directory` to prevent path traversal attacks
+- Absolute patterns are validated to ensure they stay within the base directory
+- Patterns containing `**` (recursive) are automatically converted to `*` (single-level only)
+
+**Configuration-Driven Usage:**
+```yaml
+# In data_config.yaml
+loader:
+  config:
+    base_directory: "TestData"  # All patterns relative to this directory
+
+sources:
+  daily_data:
+    pattern: "data_*.csv"  # Use 'pattern' instead of 'path'
+    format: "csv"
+    match_strategy: "first"  # Options: "first", "latest", "all"
+```
+
 ## Configuration
 
 Configuration is managed through `config.yaml`. See the configuration file for available options.
@@ -152,8 +251,14 @@ Key configuration sections:
 - **defaults**: Default settings for each source type
   - **local**: Local file loader settings
     - `format_handler_config_path`: Optional path to format_handler config file
+    - `base_directory`: Base directory for resolving relative paths/patterns (default: config file directory)
 - **logging**: Logging configuration
 - **cache**: Caching settings
+
+**Data Configuration (`data_config.yaml`):**
+- `loader.config.base_directory`: Base directory for all source patterns/paths
+- `sources.<name>.pattern`: Glob pattern for file matching (alternative to `path`)
+- `sources.<name>.match_strategy`: Strategy for multiple matches ("first", "latest", "all")
 
 ## Installation
 
