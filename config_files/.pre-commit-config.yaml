@@ -1,0 +1,13 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # The version of Ruff to use
+    rev: v0.1.9
+    hooks:
+      # 1. The Linter (Checks for syntax errors and undefined vars)
+      - id: ruff
+        # "--fix" means: If you find an error you can solve (like import sorting),
+        # just do it. Don't ask me.
+        args: [ --fix ] 
+      
+      # 2. The Formatter (Make it look pretty)
+      - id: ruff-format

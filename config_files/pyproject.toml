@@ -1,0 +1,36 @@
+[tool.ruff]
+# 1. Line Length Rule: 100 characters (DS standard)
+line-length = 100
+
+# 2. Target Python Version
+target-version = "py39"
+
+[tool.ruff.lint]
+# 3. The Rules Selection
+# F: Pyflakes (detects bugs, undefined vars)
+# E, W: Pycodestyle (syntax errors, formatting)
+# I: Isort (import sorting)
+# N: PEP8-Naming (enforces snake_case)
+# D: Pydocstyle (enforces docstrings)
+# T20: Flake8-print (blocks print statements)
+# C90: McCabe (blocks complex functions)
+select = ["F", "E", "W", "I", "N", "D", "T20", "C90"]
+
+# 4. Ignore specific annoying rules to keep teammates happy
+# D100: Missing docstring in public module (top of file) - Optional
+# D104: Missing docstring in public package - Optional
+ignore = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+# Enforce "Google" style docstrings (standard for data science)
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+# Flag any function with complexity > 10 (Too many if/else branches)
+max-complexity = 10
+
+[tool.pytest.ini_options]
+# Pytest Config
+minversion = "6.0"
+addopts = "--cov=src --cov-report=term-missing"
+testpaths = ["tests"]

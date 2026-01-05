@@ -1,0 +1,33 @@
+name: Quality Gate
+
+# Trigger on Pull Requests (Strict Mode)
+on: 
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-code:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Get the code
+      - uses: actions/checkout@v3
+
+      # 2. Set up Python
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      # 3. Install Tools
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest pytest-cov pandera pandas
+
+      # 4. Strict Linting (Fails if they left print statements or bad docs)
+      - name: Run Ruff (Strict)
+        run: ruff check . --output-format=github
+
+      # 5. Run Tests with Coverage (Fails if code is broken)
+      - name: Run Pytest
+        run: pytest tests/ --cov=src --cov-fail-under=80
