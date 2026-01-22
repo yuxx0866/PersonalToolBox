@@ -193,17 +193,20 @@ def _register_default_handlers(registry: FormatRegistry, config_path: Optional[s
     from .handlers.csv_handler import CSVFormatHandler
     from .handlers.custom_txt_handler import CustomTXTFormatHandler
     from .handlers.parquet_handler import ParquetFormatHandler
+    from .handlers.sas7bdat_handler import SAS7BDATFormatHandler
     from .utils.config_loader import get_format_config
     
     # Load configuration for each format
     csv_config = get_format_config('csv', config_path)
     custom_txt_config = get_format_config('custom_txt', config_path)
     parquet_config = get_format_config('parquet', config_path)
+    sas7bdat_config = get_format_config('sas7bdat', config_path)
     
     # Register handlers with priorities and configuration
     # Higher priority = checked first
     registry.register(CSVFormatHandler(config=csv_config), priority=10)
     registry.register(ParquetFormatHandler(config=parquet_config), priority=8)
+    registry.register(SAS7BDATFormatHandler(config=sas7bdat_config), priority=7)
     registry.register(CustomTXTFormatHandler(config=custom_txt_config), priority=5)
 
 

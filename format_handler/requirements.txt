@@ -9,6 +9,9 @@ pyarrow>=10.0.0,<14.0.0
 # Optional dependencies for specific formats
 # Uncomment as needed:
 
+# SAS7BDAT support (required for sas7bdat format handler)
+# pyreadstat>=1.1.0
+
 # Excel
 # openpyxl>=3.0.0
 # xlrd>=2.0.0

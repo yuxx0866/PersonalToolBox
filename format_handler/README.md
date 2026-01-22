@@ -10,6 +10,7 @@ This module provides a unified interface for parsing different file formats into
 - **CSV**: Comma-separated values files
 - **Custom TXT**: Text files with configurable column and row separators
 - **Parquet**: Columnar storage format (requires pyarrow or fastparquet)
+- **SAS7BDAT**: SAS binary data format (requires pyreadstat)
 
 **Designed for Future Extension:**
 - **Excel**: xlsx, xls files
@@ -30,7 +31,9 @@ format_handler/
 ├── handlers/                # Format handler implementations
 │   ├── __init__.py
 │   ├── csv_handler.py      # CSV format handler
-│   └── custom_txt_handler.py # Custom TXT format handler
+│   ├── custom_txt_handler.py # Custom TXT format handler
+│   ├── parquet_handler.py   # Parquet format handler
+│   └── sas7bdat_handler.py  # SAS7BDAT format handler
 ├── registry.py              # Format registry for handler management
 └── tests/                   # Test suite
     ├── __init__.py
@@ -107,6 +110,16 @@ df = handler.load('data.parquet')
 
 # Parquet with column selection
 df = handler.load('data.parquet', columns=['col1', 'col2'])
+
+# Load SAS7BDAT files
+handler = get_handler('data.sas7bdat')
+df = handler.load('data.sas7bdat')
+
+# SAS7BDAT with column selection
+df = handler.load('data.sas7bdat', columns=['col1', 'col2'])
+
+# SAS7BDAT with custom encoding
+df = handler.load('data.sas7bdat', encoding='utf-8')
 ```
 
 ## Configuration
@@ -147,6 +160,16 @@ To add a new format handler:
 ```bash
 pip install -e .
 ```
+
+### Optional Dependencies
+
+Some format handlers require additional dependencies:
+
+- **Parquet**: Requires `pyarrow` or `fastparquet` (included in requirements.txt)
+- **SAS7BDAT**: Requires `pyreadstat` (optional, uncomment in requirements.txt or install separately)
+  ```bash
+  pip install pyreadstat
+  ```
 
 ## Development
 

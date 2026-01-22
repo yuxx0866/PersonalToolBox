@@ -23,6 +23,12 @@ formats:
     # columns: null  # List of column names to read (null = read all)
     # use_pandas_metadata: true
   
+  sas7bdat:
+    encoding: 'latin-1'  # Common SAS encoding, or 'utf-8'
+    # columns: null  # List of column names to read (null = read all)
+    # chunksize: null  # For large files (null = read all at once)
+    # iterator: false  # Return iterator for chunked reading
+  
   # Future formats (to be added):
   # excel:
   #   sheet_name: 0
